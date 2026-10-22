@@ -1432,6 +1432,7 @@ void MainWindow::showPage(const QString &name)
 
 void MainWindow::reloadPages()
 {
+    startupMark("reloadPages: entered");
     // Remove pages (if any)
     ui->pageList->clear();
     while (ui->pageWidget->count() != 0) {
@@ -1442,6 +1443,7 @@ void MainWindow::reloadPages()
 
     mPageWelcome = new PageWelcome(this);
     mPageWelcome->setVesc(mVesc);
+    startupMark("reloadPages: PageWelcome");
     ui->pageWidget->addWidget(mPageWelcome);
     QString theme = Utility::getThemePath();
     addPageItem(tr("Welcome & Wizards"),  theme + "icons/Home-96.png", "", true);
@@ -1456,21 +1458,25 @@ void MainWindow::reloadPages()
 
     mPageConnection = new PageConnection(this);
     mPageConnection->setVesc(mVesc);
+    startupMark("reloadPages: PageConnection");
     ui->pageWidget->addWidget(mPageConnection);
     addPageItem(tr("Connection"),  theme + "icons/Connected-96.png", "", true);
 
     mPageFirmware = new PageFirmware(this);
     mPageFirmware->setVesc(mVesc);
+    startupMark("reloadPages: PageFirmware");
     ui->pageWidget->addWidget(mPageFirmware);
     addPageItem(tr("Firmware"),  theme + "icons/Electronics-96.png", "", true);
 
     mPagePackage = new PageVescPackage(this);
     mPagePackage->setVesc(mVesc);
+    startupMark("reloadPages: PagePackage");
     ui->pageWidget->addWidget(mPagePackage);
     addPageItem(tr("VESC Packages"),  theme + "icons/Package-96.png", "", true);
 
     mPageMotorSettings = new PageMotorSettings(this);
     mPageMotorSettings->setVesc(mVesc);
+    startupMark("reloadPages: PageMotorSettings");
     ui->pageWidget->addWidget(mPageMotorSettings);
     addPageItem(tr("Motor Settings"),  theme + "icons/motor.png", "", true);
     mPageNameIdList.insert("motor", ui->pageList->count() - 1);
@@ -1479,6 +1485,7 @@ void MainWindow::reloadPages()
 
     mPageMotor = new PageMotor(this);
     mPageMotor->setVesc(mVesc);
+    startupMark("reloadPages: PageMotor");
     ui->pageWidget->addWidget(mPageMotor);
     addPageItem(tr("General"),  theme + "icons/Horizontal Settings Mixer-96.png",
                 theme + "icons/mcconf.png", false, true);
@@ -1486,6 +1493,7 @@ void MainWindow::reloadPages()
 
     mPageBldc = new PageBldc(this);
     mPageBldc->setVesc(mVesc);
+    startupMark("reloadPages: PageBldc");
     ui->pageWidget->addWidget(mPageBldc);
     addPageItem(tr("BLDC"),  theme + "icons/bldc.png",
                 theme + "icons/mcconf.png", false, true);
@@ -1493,6 +1501,7 @@ void MainWindow::reloadPages()
 
     mPageDc = new PageDc(this);
     mPageDc->setVesc(mVesc);
+    startupMark("reloadPages: PageDc");
     ui->pageWidget->addWidget(mPageDc);
     addPageItem(tr("DC"),  theme + "icons/Car Battery-96.png",
                 theme + "icons/mcconf.png", false, true);
@@ -1500,6 +1509,7 @@ void MainWindow::reloadPages()
 
     mPageFoc = new PageFoc(this);
     mPageFoc->setVesc(mVesc);
+    startupMark("reloadPages: PageFoc");
     ui->pageWidget->addWidget(mPageFoc);
     addPageItem(tr("FOC"),  theme + "icons/3ph_sine.png",
                 theme + "icons/mcconf.png", false, true);
@@ -1507,6 +1517,7 @@ void MainWindow::reloadPages()
 
     mPageGpd = new PageGPD(this);
     mPageGpd->setVesc(mVesc);
+    startupMark("reloadPages: PageGpd");
     ui->pageWidget->addWidget(mPageGpd);
     addPageItem(tr("GPDrive"),  theme + "icons/3ph_sine.png",
                 theme + "icons/mcconf.png", false, true);
@@ -1514,6 +1525,7 @@ void MainWindow::reloadPages()
 
     mPageControllers = new PageControllers(this);
     mPageControllers->setVesc(mVesc);
+    startupMark("reloadPages: PageControllers");
     ui->pageWidget->addWidget(mPageControllers);
     addPageItem(tr("PID Controllers"),  theme + "icons/Speed-96.png",
                 theme + "icons/mcconf.png", false, true);
@@ -1521,6 +1533,7 @@ void MainWindow::reloadPages()
 
     mPageMotorInfo = new PageMotorInfo(this);
     mPageMotorInfo->setVesc(mVesc);
+    startupMark("reloadPages: PageMotorInfo");
     ui->pageWidget->addWidget(mPageMotorInfo);
     addPageItem(tr("Additional Info"),  theme + "icons/About-96.png",
                 theme + "icons/mcconf.png", false, true);
@@ -1528,6 +1541,7 @@ void MainWindow::reloadPages()
 
     mPageExperiments = new PageExperiments(this);
     mPageExperiments->setVesc(mVesc);
+    startupMark("reloadPages: PageExperiments");
     ui->pageWidget->addWidget(mPageExperiments);
     addPageItem(tr("Experiments"),  theme + "icons/Calculator-96.png",
                 theme + "icons/mcconf.png", false, true);
@@ -1535,12 +1549,14 @@ void MainWindow::reloadPages()
 
     mPageAppSettings = new PageAppSettings(this);
     mPageAppSettings->setVesc(mVesc);
+    startupMark("reloadPages: PageAppSettings");
     ui->pageWidget->addWidget(mPageAppSettings);
     addPageItem(tr("App Settings"),  theme + "icons/Outgoing Data-96.png", "", true);
     mPageNameIdList.insert("app", ui->pageList->count() - 1);
 
     mPageAppGeneral = new PageAppGeneral(this);
     mPageAppGeneral->setVesc(mVesc);
+    startupMark("reloadPages: PageAppGeneral");
     ui->pageWidget->addWidget(mPageAppGeneral);
     addPageItem(tr("General"),  theme + "icons/Horizontal Settings Mixer-96.png",
                 theme + "icons/appconf.png", false, true);
@@ -1548,6 +1564,7 @@ void MainWindow::reloadPages()
 
     mPageAppPpm = new PageAppPpm(this);
     mPageAppPpm->setVesc(mVesc);
+    startupMark("reloadPages: PageAppPpm");
     ui->pageWidget->addWidget(mPageAppPpm);
     addPageItem(tr("PPM"),  theme + "icons/Controller-96.png",
                 theme + "icons/appconf.png", false, true);
@@ -1555,6 +1572,7 @@ void MainWindow::reloadPages()
 
     mPageAppAdc = new PageAppAdc(this);
     mPageAppAdc->setVesc(mVesc);
+    startupMark("reloadPages: PageAppAdc");
     ui->pageWidget->addWidget(mPageAppAdc);
     addPageItem(tr("ADC"),  theme + "icons/Potentiometer-96.png",
                 theme + "icons/appconf.png", false, true);
@@ -1562,6 +1580,7 @@ void MainWindow::reloadPages()
 
     mPageAppUart = new PageAppUart(this);
     mPageAppUart->setVesc(mVesc);
+    startupMark("reloadPages: PageAppUart");
     ui->pageWidget->addWidget(mPageAppUart);
     addPageItem(tr("UART"),  theme + "icons/Rs 232 Male-96.png",
                 theme + "icons/appconf.png", false, true);
@@ -1569,6 +1588,7 @@ void MainWindow::reloadPages()
 
     mPageAppNunchuk = new PageAppNunchuk(this);
     mPageAppNunchuk->setVesc(mVesc);
+    startupMark("reloadPages: PageAppNunchuk");
     ui->pageWidget->addWidget(mPageAppNunchuk);
     addPageItem(tr("VESC Remote"),  theme + "icons/icons8-fantasy-96.png",
                 theme + "icons/appconf.png", false, true);
@@ -1576,6 +1596,7 @@ void MainWindow::reloadPages()
 
     mPageAppNrf = new PageAppNrf(this);
     mPageAppNrf->setVesc(mVesc);
+    startupMark("reloadPages: PageAppNrf");
     ui->pageWidget->addWidget(mPageAppNrf);
     addPageItem(tr("Nrf"),  theme + "icons/Online-96.png",
                 theme + "icons/appconf.png", false, true);
@@ -1583,6 +1604,7 @@ void MainWindow::reloadPages()
 
     mPageAppPas = new PageAppPas(this);
     mPageAppPas->setVesc(mVesc);
+    startupMark("reloadPages: PageAppPas");
     ui->pageWidget->addWidget(mPageAppPas);
     addPageItem(tr("PAS"),  theme + "icons/icons8-fantasy-96.png",
                 theme + "icons/appconf.png", false, true);
@@ -1590,6 +1612,7 @@ void MainWindow::reloadPages()
 
     mPageAppImu = new PageAppImu(this);
     mPageAppImu->setVesc(mVesc);
+    startupMark("reloadPages: PageAppImu");
     ui->pageWidget->addWidget(mPageAppImu);
     addPageItem(tr("IMU"),  theme + "icons/Gyroscope-96.png",
                 theme + "icons/appconf.png", false, true);
@@ -1597,6 +1620,7 @@ void MainWindow::reloadPages()
 
     mPageCustomConfig0 = new PageCustomConfig(this);
     mPageCustomConfig0->setVesc(mVesc);
+    startupMark("reloadPages: PageCustomConfig0");
     mPageCustomConfig0->setConfNum(0);
     ui->pageWidget->addWidget(mPageCustomConfig0);
     addPageItem("Config0",  theme + "icons/Electronics-96.png", "", true);
@@ -1605,6 +1629,7 @@ void MainWindow::reloadPages()
 
     mPageCustomConfig1 = new PageCustomConfig(this);
     mPageCustomConfig1->setVesc(mVesc);
+    startupMark("reloadPages: PageCustomConfig1");
     mPageCustomConfig1->setConfNum(1);
     ui->pageWidget->addWidget(mPageCustomConfig1);
     addPageItem(tr("Config1"),  theme + "icons/Electronics-96.png", "", true);
@@ -1613,6 +1638,7 @@ void MainWindow::reloadPages()
 
     mPageCustomConfig2 = new PageCustomConfig(this);
     mPageCustomConfig2->setVesc(mVesc);
+    startupMark("reloadPages: PageCustomConfig2");
     mPageCustomConfig2->setConfNum(2);
     ui->pageWidget->addWidget(mPageCustomConfig2);
     addPageItem(tr("Config2"),  theme + "icons/Electronics-96.png", "", true);
@@ -1621,17 +1647,20 @@ void MainWindow::reloadPages()
 
     mPageDataAnalysis = new PageDataAnalysis(this);
     mPageDataAnalysis->setVesc(mVesc);
+    startupMark("reloadPages: PageDataAnalysis");
     ui->pageWidget->addWidget(mPageDataAnalysis);
     addPageItem(tr("Data Analysis"),  theme + "icons/Line Chart-96.png", "", true);
 
     mPageRtData = new PageRtData(this);
     mPageRtData->setVesc(mVesc);
+    startupMark("reloadPages: PageRtData");
     ui->pageWidget->addWidget(mPageRtData);
     addPageItem(tr("Realtime Data"),  theme + "icons/rt_off.png", "", false, true);
     mPageNameIdList.insert("data_rt", ui->pageList->count() - 1);
 
     mPageSampledData = new PageSampledData(this);
     mPageSampledData->setVesc(mVesc);
+    startupMark("reloadPages: PageSampledData");
     ui->pageWidget->addWidget(mPageSampledData);
     addPageItem(tr("Sampled Data"),  theme + "icons/Line Chart-96.png", "", false, true);
     mPageNameIdList.insert("data_sampled", ui->pageList->count() - 1);
@@ -1644,23 +1673,27 @@ void MainWindow::reloadPages()
 
     mPageImu = new PageImu(this);
     mPageImu->setVesc(mVesc);
+    startupMark("reloadPages: PageImu");
     ui->pageWidget->addWidget(mPageImu);
     addPageItem(tr("IMU Data"),  theme + "icons/Gyroscope-96.png", "", false, true);
     mPageNameIdList.insert("data_imu", ui->pageList->count() - 1);
 
     mPageBms = new PageBms(this);
     mPageBms->setVesc(mVesc);
+    startupMark("reloadPages: PageBms");
     ui->pageWidget->addWidget(mPageBms);
     addPageItem(tr("BMS Data"),  theme + "icons/icons8-battery-100.png", "", false, true);
     mPageNameIdList.insert("data_bms", ui->pageList->count() - 1);
 
     mPageLogAnalysis = new PageLogAnalysis(this);
     mPageLogAnalysis->setVesc(mVesc);
+    startupMark("reloadPages: PageLogAnalysis");
     ui->pageWidget->addWidget(mPageLogAnalysis);
     addPageItem(tr("Log Analysis"),  theme + "icons/Waypoint Map-96.png", "", false, true);
 
     mPageMotorComparison = new PageMotorComparison(this);
     mPageMotorComparison->setVesc(mVesc);
+    startupMark("reloadPages: PageMotorComparison");
     ui->pageWidget->addWidget(mPageMotorComparison);
     addPageItem(tr("Motor Analysis"),  theme + "icons/motor.png", "", false, true);
     mPageNameIdList.insert("motor_comparison", ui->pageList->count() - 1);
@@ -1675,21 +1708,25 @@ void MainWindow::reloadPages()
 
     mPageTerminal = new PageTerminal(this);
     mPageTerminal->setVesc(mVesc);
+    startupMark("reloadPages: PageTerminal");
     ui->pageWidget->addWidget(mPageTerminal);
     addPageItem("Terminal",  theme + "icons/Console-96.png", "", false, true);
 
     mPageScripting = new PageScripting(this);
     mPageScripting->setVesc(mVesc);
+    startupMark("reloadPages: PageScripting");
     ui->pageWidget->addWidget(mPageScripting);
     addPageItem("QML Scripting",  theme + "icons_textedit/Outdent-96.png", "", false, true);
 
     mPageLisp = new PageLisp(this);
     mPageLisp->setVesc(mVesc);
+    startupMark("reloadPages: PageLisp");
     ui->pageWidget->addWidget(mPageLisp);
     addPageItem("LispBM Scripting",  theme + "icons_textedit/Outdent-96.png", "", false, true);
 
     mPageCanAnalyzer = new PageCanAnalyzer(this);
     mPageCanAnalyzer->setVesc(mVesc);
+    startupMark("reloadPages: PageCanAnalyzer");
     ui->pageWidget->addWidget(mPageCanAnalyzer);
     addPageItem(tr("CAN Tools"),  theme + "icons/can_off.png", "", false, true);
 
@@ -1703,11 +1740,13 @@ void MainWindow::reloadPages()
 
     mPageSwdProg = new PageSwdProg(this);
     mPageSwdProg->setVesc(mVesc);
+    startupMark("reloadPages: PageSwdProg");
     ui->pageWidget->addWidget(mPageSwdProg);
     addPageItem(tr("SWD Programmer"),  theme + "icons/Electronics-96.png", "", true);
 
     mPageEspProg = new PageEspProg(this);
     mPageEspProg->setVesc(mVesc);
+    startupMark("reloadPages: PageEspProg");
     ui->pageWidget->addWidget(mPageEspProg);
     addPageItem(tr("ESP Programmer"),  theme + "icons/Electronics-96.png", "", true);
 

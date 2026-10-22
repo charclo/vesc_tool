@@ -88,7 +88,7 @@ jobs:
           $exe = Get-ChildItem build/win/vesc_tool_*.exe | Select-Object -First 1
           $env:VT_STARTUP_TIMING = '1'
 
-          for ($i = 1; $i -le 3; $i++) {
+          function Measure-Startup([string]$label, [int]$timeoutSec = 120) {
             $psi = New-Object System.Diagnostics.ProcessStartInfo $exe.FullName
             $psi.WorkingDirectory = $exe.DirectoryName
             $psi.UseShellExecute = $false
@@ -96,21 +96,25 @@ jobs:
 
             $t0 = [DateTimeOffset]::Now.ToUnixTimeMilliseconds()
             $p = [System.Diagnostics.Process]::Start($psi)
-            $deadline = (Get-Date).AddSeconds(120)
+            $deadline = (Get-Date).AddSeconds($timeoutSec)
             $lines = @()
             while ($true) {
               $left = [int]($deadline - (Get-Date)).TotalMilliseconds
-              if ($left -le 0) { $lines += '(timeout after 120 s)'; break }
+              if ($left -le 0) { $lines += "(timeout after $timeoutSec s)"; break }
               $task = $p.StandardError.ReadLineAsync()
-              if (-not $task.Wait($left)) { $lines += '(timeout after 120 s)'; break }
-              if ($null -eq $task.Result) { $lines += '(process exited)'; break }
+              if (-not $task.Wait($left)) { $lines += "(timeout after $timeoutSec s)"; break }
+              if ($null -eq $task.Result) {
+                $p.WaitForExit()
+                $lines += ('(process exited, code 0x{0:X8})' -f $p.ExitCode)
+                break
+              }
               $lines += $task.Result
               if ($task.Result -match 'checkVersion done') { break }
             }
             Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
             Start-Sleep -Seconds 2
 
-            Write-Host "=== Run $i"
+            Write-Host "=== $label"
             foreach ($l in $lines) {
               if ($l -match '^STARTUP (\d+) (\d+) (.*)$') {
                 Write-Host ('{0,8} ms since launch {1,8} ms since main  {2}' -f ([long]$matches[1] - $t0), $matches[2], $matches[3])
@@ -119,6 +123,18 @@ jobs:
               }
             }
           }
+
+          for ($i = 1; $i -le 3; $i++) { Measure-Startup "Run $i" }
+
+          # Diagnose crashes in the OpenGL path: render Qt Quick in software.
+          $env:QT_QUICK_BACKEND = 'software'
+          Measure-Startup 'Run with QT_QUICK_BACKEND=software'
+          Remove-Item Env:QT_QUICK_BACKEND
+
+          # Simulate a network where vesc-project.com is unreachable (packets dropped).
+          Add-Content -Path C:\Windows\System32\drivers\etc\hosts -Value "`n10.255.255.1 vesc-project.com"
+          ipconfig /flushdns | Out-Null
+          Measure-Startup 'Run with vesc-project.com unreachable' 180
 
       - uses: actions/upload-artifact@v4
         with:
