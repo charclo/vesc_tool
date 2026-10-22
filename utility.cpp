@@ -18,6 +18,7 @@
     */
 
 #include "utility.h"
+#include "startuptimer.h"
 #ifdef Q_OS_IOS
 #include "ios/src/setIosParameters.h"
 #endif
@@ -37,6 +38,7 @@
 #include <QNetworkInterface>
 #include <QDirIterator>
 #include <QPixmapCache>
+#include <QPointer>
 
 #include "maddy/parser.h"
 #include "heatshrink/heatshrinkif.h"
@@ -171,40 +173,46 @@ bool Utility::autoconnectBlockingWithProgress(VescInterface *vesc, QWidget *pare
 
 void Utility::checkVersion(VescInterface *vesc)
 {
-    QString version = QString::number(VT_VERSION);
-    QUrl url("https://vesc-project.com/vesctool-version.html");
-    QNetworkAccessManager manager;
-    QNetworkRequest request(url);
-    QNetworkReply *reply = manager.get(request);
-    QEventLoop loop;
-    QObject::connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
-    loop.exec();
+    // Asynchronous with a timeout, so that a slow or unreachable server does not
+    // block the event loop (and on Windows the first appearance of the main window).
+    QNetworkAccessManager *manager = new QNetworkAccessManager();
+    QNetworkRequest request(QUrl("https://vesc-project.com/vesctool-version.html"));
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+    request.setTransferTimeout(10000);
+#endif
+    QNetworkReply *reply = manager->get(request);
+    QPointer<VescInterface> vescPtr(vesc);
+    bool hasVesc = vesc != nullptr;
 
-    QString res = QString::fromUtf8(reply->readAll());
+    QObject::connect(reply, &QNetworkReply::finished, manager, [reply, manager, vescPtr, hasVesc]() {
+        startupMark("checkVersion reply received");
+        QString version = QString::number(VT_VERSION);
+        QString res = QString::fromUtf8(reply->readAll());
 
-    if (res.startsWith("vesctoolversion")) {
-        res.remove(0, 15);
-        res.remove(res.indexOf("vesctoolversion"), res.size());
+        if (res.startsWith("vesctoolversion")) {
+            res.remove(0, 15);
+            res.remove(res.indexOf("vesctoolversion"), res.size());
 
-        if (res.toDouble() > version.toDouble()) {
-            if (vesc) {
-                vesc->emitStatusMessage("A new version of VESC Tool is available", true);
-                vesc->emitMessageDialog(QObject::tr("New Software Available"),
-                                        QObject::tr("A new version of VESC Tool is available. Go to "
-                                                    "<a href=\"http://vesc-project.com/\">http://vesc-project.com/</a>"
-                                                    " to download it and get all the latest features."),
-                                        true);
-            } else {
-                qDebug() << "A new version of VESC Tool is available. Go to vesc-project.com to download it "
-                            "and get all the latest features.";
+            if (res.toDouble() > version.toDouble()) {
+                if (vescPtr) {
+                    vescPtr->emitStatusMessage("A new version of VESC Tool is available", true);
+                    vescPtr->emitMessageDialog(QObject::tr("New Software Available"),
+                                               QObject::tr("A new version of VESC Tool is available. Go to "
+                                                           "<a href=\"http://vesc-project.com/\">http://vesc-project.com/</a>"
+                                                           " to download it and get all the latest features."),
+                                               true);
+                } else if (!hasVesc) {
+                    qDebug() << "A new version of VESC Tool is available. Go to vesc-project.com to download it "
+                                "and get all the latest features.";
+                }
             }
+        } else {
+            qWarning() << "Version check failed:" << reply->errorString() << res;
         }
-    } else {
-        qWarning() << res;
-    }
 
-    reply->abort();
-    reply->deleteLater();
+        reply->deleteLater();
+        manager->deleteLater();
+    });
 }
 
 QString Utility::fwChangeLog()

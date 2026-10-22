@@ -123,7 +123,7 @@ jobs:
                   break
                 }
                 $lines += $task.Result
-                if ($task.Result -match 'checkVersion done') { break }
+                if ($task.Result -match 'checkVersion reply received') { break }
                 $task = $p.StandardError.ReadLineAsync()
               }
               $elapsed = ([DateTimeOffset]::Now.ToUnixTimeMilliseconds() - $t0) / 1000
