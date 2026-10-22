@@ -18,6 +18,7 @@
     */
 
 #include "mainwindow.h"
+#include "startuptimer.h"
 #include "ui_mainwindow.h"
 #include <QMessageBox>
 #include <QDebug>
@@ -117,7 +118,9 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+    startupMark("MainWindow: ctor entered");
     ui->setupUi(this);
+    startupMark("MainWindow: setupUi done");
 
     this->setWindowIcon(QIcon(":/res/icon.svg"));
 
@@ -212,12 +215,15 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->handbrakeButton->setIcon(Utility::getIcon("icons/Brake Warning-96.png"));
     ui->fullBrakeButton->setIcon(Utility::getIcon("icons/Anchor-96.png"));
 
+    startupMark("MainWindow: icons set");
     qRegisterMetaType<QtMsgType>("QtMsgType");
 
     mVersion = QString::number(VT_VERSION, 'f', 2);
     mVesc = new VescInterface(this);
+    startupMark("MainWindow: VescInterface created");
     mPreferences = new Preferences(this);
     mPreferences->setVesc(mVesc);
+    startupMark("MainWindow: Preferences created");
     mPollManager.setVesc(mVesc);
 
     mStatusInfoTime = 0;
@@ -258,7 +264,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->mainToolBar->setContextMenuPolicy(Qt::PreventContextMenu);
 
     mVesc->fwConfig()->loadParamsXml(Utility::configPath("fw.xml"));
+    startupMark("MainWindow: fw.xml loaded");
     Utility::configLoadLatest(mVesc);
+    startupMark("MainWindow: configLoadLatest done");
 
     QMenu *fwMenu = new QMenu(this);
     fwMenu->setTitle("Load Firmware Configs");
@@ -298,8 +306,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
     reloadBackupMenu();
     connect(mVesc, &VescInterface::configurationBackupsChanged, reloadBackupMenu);
+    startupMark("MainWindow: menus built");
 
     reloadPages();
+    startupMark("MainWindow: reloadPages done");
 
     mMcConfRead = false;
     mAppConfRead = false;
@@ -951,6 +961,7 @@ void MainWindow::timerSlot()
     // Run startup checks
     static bool has_run_start_checks = false;
     if (!has_run_start_checks) {
+        startupMark("timerSlot: start checks");
         if (mSettings.contains("introVersion")) {
             if (mSettings.value("introVersion").toInt() != VT_INTRO_VERSION) {
                 mSettings.setValue("intro_done", false);
@@ -978,7 +989,9 @@ void MainWindow::timerSlot()
 
         has_run_start_checks = true;
         checkUdev();
+        startupMark("timerSlot: before checkVersion");
         Utility::checkVersion(mVesc);
+        startupMark("timerSlot: checkVersion done");
     }
 }
 

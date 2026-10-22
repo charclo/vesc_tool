@@ -18,6 +18,7 @@
     */
 
 #include "mainwindow.h"
+#include "startuptimer.h"
 #include "boardsetupwindow.h"
 #include "mobile/qmlui.h"
 #include "mobile/fwhelper.h"
@@ -164,6 +165,8 @@ static void addFonts() {
 
 int main(int argc, char *argv[])
 {
+    startupMark("main entered");
+
     // Settings
     QCoreApplication::setOrganizationName("VESC");
     QCoreApplication::setOrganizationDomain("vesc-project.com");
@@ -1592,10 +1595,13 @@ int main(int argc, char *argv[])
     } else if (downloadPackageArchive) {
         return 0;
     } else {
+        startupMark("before QApplication");
         QApplication *a = new QApplication(argc, argv);
         app = a;
+        startupMark("QApplication created");
 
         addFonts();
+        startupMark("fonts added");
 
         // Style
         qApp->setStyleSheet("QListView::item::selected {background: qlineargradient(x1: 1.0, y1: 0.0, x2: 0, y2: 0, stop: 0 " +
@@ -1740,8 +1746,12 @@ int main(int argc, char *argv[])
             bw->show();
         } else {
             QPixmapCache::setCacheLimit(256000);
+            startupMark("before MainWindow");
             w = new MainWindow;
+            startupMark("MainWindow constructed");
             w->show();
+            startupMark("MainWindow shown");
+            QTimer::singleShot(0, []() { startupMark("event loop running"); });
         }
     }
 #endif

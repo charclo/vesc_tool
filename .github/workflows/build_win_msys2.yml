@@ -74,6 +74,52 @@ jobs:
           ls -la vesc_tool_*.exe
           ldd vesc_tool_*.exe
 
+      - name: Measure startup
+        shell: pwsh
+        run: |
+          Get-MpComputerStatus | Select-Object AMServiceEnabled, RealTimeProtectionEnabled | Format-List
+
+          # Mark the introduction as done, the modal wizard would block the start checks.
+          $key = 'HKCU:\Software\VESC\VESC Tool'
+          New-Item -Path $key -Force | Out-Null
+          New-ItemProperty -Path $key -Name intro_done -Value 'true' -PropertyType String -Force | Out-Null
+          New-ItemProperty -Path $key -Name introVersion -Value 1 -PropertyType DWord -Force | Out-Null
+
+          $exe = Get-ChildItem build/win/vesc_tool_*.exe | Select-Object -First 1
+          $env:VT_STARTUP_TIMING = '1'
+
+          for ($i = 1; $i -le 3; $i++) {
+            $psi = New-Object System.Diagnostics.ProcessStartInfo $exe.FullName
+            $psi.WorkingDirectory = $exe.DirectoryName
+            $psi.UseShellExecute = $false
+            $psi.RedirectStandardError = $true
+
+            $t0 = [DateTimeOffset]::Now.ToUnixTimeMilliseconds()
+            $p = [System.Diagnostics.Process]::Start($psi)
+            $deadline = (Get-Date).AddSeconds(120)
+            $lines = @()
+            while ($true) {
+              $left = [int]($deadline - (Get-Date)).TotalMilliseconds
+              if ($left -le 0) { $lines += '(timeout after 120 s)'; break }
+              $task = $p.StandardError.ReadLineAsync()
+              if (-not $task.Wait($left)) { $lines += '(timeout after 120 s)'; break }
+              if ($null -eq $task.Result) { $lines += '(process exited)'; break }
+              $lines += $task.Result
+              if ($task.Result -match 'checkVersion done') { break }
+            }
+            Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+            Start-Sleep -Seconds 2
+
+            Write-Host "=== Run $i"
+            foreach ($l in $lines) {
+              if ($l -match '^STARTUP (\d+) (\d+) (.*)$') {
+                Write-Host ('{0,8} ms since launch {1,8} ms since main  {2}' -f ([long]$matches[1] - $t0), $matches[2], $matches[3])
+              } else {
+                Write-Host "  $l"
+              }
+            }
+          }
+
       - uses: actions/upload-artifact@v4
         with:
           name: vesc_tool_windows_msys2_${{ matrix.link }}
