@@ -54,11 +54,14 @@ jobs:
         if: matrix.link == 'dynamic'
         run: |
           cd build/win
-          windeployqt-qt5 --release --compiler-runtime --qmldir ../.. vesc_tool_*.exe
+          # MSYS2 Qt uses desktop OpenGL, there is no ANGLE (libGLESv2.dll) to deploy.
+          windeployqt-qt5 --release --compiler-runtime --no-angle --no-opengl-sw \
+            --no-translations --qmldir ../.. vesc_tool_*.exe
           # windeployqt only knows about Qt itself; copy the other MSYS2
           # libraries (zlib, freetype, icu, ...) until nothing new shows up.
           while true; do
-            missing=$(find . -name '*.dll' -o -name '*.exe' | xargs ldd 2>/dev/null \
+            missing=$({ find . \( -name '*.dll' -o -name '*.exe' \) -print0 \
+              | xargs -0 ldd 2>/dev/null || true; } \
               | awk '$3 ~ /^\/ucrt64\// {print $3}' | sort -u \
               | while read -r f; do [ -e "$(basename "$f")" ] || echo "$f"; done)
             [ -z "$missing" ] && break
