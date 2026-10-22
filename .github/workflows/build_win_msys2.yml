@@ -17,7 +17,7 @@ jobs:
       matrix:
         include:
           - link: dynamic
-            qmake: qmake
+            qmake: qmake-qt5
             packages: >-
               qt5-base qt5-declarative qt5-quickcontrols qt5-quickcontrols2
               qt5-graphicaleffects qt5-serialport qt5-connectivity qt5-gamepad
@@ -54,7 +54,7 @@ jobs:
         if: matrix.link == 'dynamic'
         run: |
           cd build/win
-          windeployqt --release --compiler-runtime --qmldir ../.. vesc_tool_*.exe
+          windeployqt-qt5 --release --compiler-runtime --qmldir ../.. vesc_tool_*.exe
           # windeployqt only knows about Qt itself; copy the other MSYS2
           # libraries (zlib, freetype, icu, ...) until nothing new shows up.
           while true; do
