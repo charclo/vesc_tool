@@ -46,6 +46,8 @@ jobs:
 
       - name: Build
         run: |
+          # Release-style build, so the modal "test version" warning does not cover the window.
+          sed -i 's/^VT_IS_TEST_VERSION = 1/VT_IS_TEST_VERSION = 0/' vesc_tool.pro
           ${{ matrix.qmake }} -config release "CONFIG+=release_win build_original"
           make -j$(nproc)
           rm -rf build/win/obj
@@ -113,6 +115,7 @@ jobs:
             $deadline = (Get-Date).AddSeconds($timeoutSec)
             $probes = [System.Collections.Generic.List[int]]::new([int[]]$probeAt)
             $lines = @()
+            $done = $false
             $task = $p.StandardError.ReadLineAsync()
             while ($true) {
               if ((Get-Date) -gt $deadline) { $lines += "(timeout after $timeoutSec s)"; break }
@@ -123,9 +126,11 @@ jobs:
                   break
                 }
                 $lines += $task.Result
-                if ($task.Result -match 'checkVersion reply received') { break }
+                if ($task.Result -match 'checkVersion reply received') { $done = $true }
                 $task = $p.StandardError.ReadLineAsync()
               }
+              # Stop once the version check has finished and all probes are taken.
+              if ($done -and $probes.Count -eq 0) { break }
               $elapsed = ([DateTimeOffset]::Now.ToUnixTimeMilliseconds() - $t0) / 1000
               if ($probes.Count -gt 0 -and $elapsed -ge $probes[0]) {
                 $sec = $probes[0]; $probes.RemoveAt(0)
@@ -147,17 +152,19 @@ jobs:
             }
           }
 
-          for ($i = 1; $i -le 3; $i++) { Measure-Startup "Run $i" 120 @(2) }
-
-          # Diagnose crashes in the OpenGL path: render Qt Quick in software.
+          # The runner has no GPU: without this Qt Quick fails to create an OpenGL
+          # context and shows a modal error instead of the main window.
           $env:QT_QUICK_BACKEND = 'software'
-          Measure-Startup 'Run with QT_QUICK_BACKEND=software'
-          Remove-Item Env:QT_QUICK_BACKEND
+
+          for ($i = 1; $i -le 3; $i++) { Measure-Startup "Run $i" 120 @(4) }
 
           # Simulate a network where vesc-project.com is unreachable (packets dropped).
           Add-Content -Path C:\Windows\System32\drivers\etc\hosts -Value "`n10.255.255.1 vesc-project.com"
           ipconfig /flushdns | Out-Null
-          Measure-Startup 'Run with vesc-project.com unreachable' 180 @(5, 15, 30)
+          Measure-Startup 'Unreachable server, new async check' 60 @(5, 15)
+          $env:VT_BLOCKING_VERSION_CHECK = '1'
+          Measure-Startup 'Unreachable server, original blocking check' 120 @(5, 15, 30)
+          Remove-Item Env:VT_BLOCKING_VERSION_CHECK
 
       - uses: actions/upload-artifact@v4
         if: always()

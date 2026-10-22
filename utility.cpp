@@ -171,8 +171,43 @@ bool Utility::autoconnectBlockingWithProgress(VescInterface *vesc, QWidget *pare
     return res;
 }
 
+// Original blocking implementation, kept temporarily for startup measurements.
+static void checkVersionBlocking(VescInterface *vesc)
+{
+    QString version = QString::number(VT_VERSION);
+    QUrl url("https://vesc-project.com/vesctool-version.html");
+    QNetworkAccessManager manager;
+    QNetworkRequest request(url);
+    QNetworkReply *reply = manager.get(request);
+    QEventLoop loop;
+    QObject::connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
+    loop.exec();
+    startupMark("checkVersion reply received");
+
+    QString res = QString::fromUtf8(reply->readAll());
+
+    if (res.startsWith("vesctoolversion")) {
+        res.remove(0, 15);
+        res.remove(res.indexOf("vesctoolversion"), res.size());
+
+        if (res.toDouble() > version.toDouble() && vesc) {
+            vesc->emitStatusMessage("A new version of VESC Tool is available", true);
+        }
+    } else {
+        qWarning() << res;
+    }
+
+    reply->abort();
+    reply->deleteLater();
+}
+
 void Utility::checkVersion(VescInterface *vesc)
 {
+    if (qEnvironmentVariableIsSet("VT_BLOCKING_VERSION_CHECK")) {
+        checkVersionBlocking(vesc);
+        return;
+    }
+
     // Asynchronous with a timeout, so that a slow or unreachable server does not
     // block the event loop (and on Windows the first appearance of the main window).
     QNetworkAccessManager *manager = new QNetworkAccessManager();
