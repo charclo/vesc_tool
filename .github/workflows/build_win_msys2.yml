@@ -1,0 +1,77 @@
+# Native Windows build with MSYS2 (MinGW-w64, UCRT64) and Qt 5.15.x.
+# Builds a dynamic variant (exe + DLLs collected next to it) and a static
+# variant (single exe, like the MXE cross build in build_win).
+name: Windows build (MSYS2, Qt 5.15)
+
+on:
+  push:
+    branches: [ci/windows-msys2]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: ${{ matrix.link }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - link: dynamic
+            qmake: qmake
+            packages: >-
+              qt5-base qt5-declarative qt5-quickcontrols qt5-quickcontrols2
+              qt5-graphicaleffects qt5-serialport qt5-connectivity qt5-gamepad
+              qt5-svg qt5-3d qt5-tools
+          - link: static
+            qmake: /ucrt64/qt5-static/bin/qmake
+            packages: qt5-static openssl
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: git make zip
+          pacboy: toolchain:p ${{ matrix.packages }}
+
+      - name: Show versions
+        run: |
+          ${{ matrix.qmake }} -v
+          g++ --version | head -1
+
+      - name: Build
+        run: |
+          ${{ matrix.qmake }} -config release "CONFIG+=release_win build_original"
+          make -j$(nproc)
+          rm -rf build/win/obj
+
+      - name: Collect DLLs (dynamic)
+        if: matrix.link == 'dynamic'
+        run: |
+          cd build/win
+          windeployqt --release --compiler-runtime --qmldir ../.. vesc_tool_*.exe
+          # windeployqt only knows about Qt itself; copy the other MSYS2
+          # libraries (zlib, freetype, icu, ...) until nothing new shows up.
+          while true; do
+            missing=$(find . -name '*.dll' -o -name '*.exe' | xargs ldd 2>/dev/null \
+              | awk '$3 ~ /^\/ucrt64\// {print $3}' | sort -u \
+              | while read -r f; do [ -e "$(basename "$f")" ] || echo "$f"; done)
+            [ -z "$missing" ] && break
+            cp $missing .
+          done
+
+      - name: Show dependencies
+        run: |
+          cd build/win
+          ls -la vesc_tool_*.exe
+          ldd vesc_tool_*.exe
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vesc_tool_windows_msys2_${{ matrix.link }}
+          path: build/win/
