@@ -6,6 +6,7 @@ name: Windows build (MSYS2, Qt 5.15)
 on:
   push:
     branches: [ci/windows-msys2]
+    paths-ignore: ['**.md']
   workflow_dispatch:
 
 jobs:
